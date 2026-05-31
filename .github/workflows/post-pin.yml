@@ -1,4 +1,4 @@
-name: Очищенная отправка и закрепление
+name: Финальная витрина (эмодзи-ссылки)
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ jobs:
   send-and-pin:
     runs-on: ubuntu-latest
     steps:
-      - name: Отправка с очисткой переменных
+      - name: Отправка и закрепление
         env:
           RAW_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           RAW_CHAT_ID: ${{ secrets.CHAT_ID }}
@@ -15,67 +15,34 @@ jobs:
           python3 << 'PYEOF'
           import os, json, urllib.request, sys
 
-          # Очищаем от пробелов и переносов строк
           TOKEN = os.environ["RAW_TOKEN"].strip()
           CHAT_ID = os.environ["RAW_CHAT_ID"].strip()
-
-          print(f"Токен начинается с: {TOKEN[:10]}... заканчивается на ...{TOKEN[-5:]}")
-          print(f"Chat ID: '{CHAT_ID}' (длина {len(CHAT_ID)})")
-
           BASE = f"https://api.telegram.org/bot{TOKEN}"
 
-          # Проверяем бота
-          try:
-              with urllib.request.urlopen(f"{BASE}/getMe") as resp:
-                  me = json.loads(resp.read().decode())
-                  if me.get("ok"):
-                      print("✅ Бот:", me["result"]["username"])
-                  else:
-                      print("❌ Токен недействителен:", me)
-                      sys.exit(1)
-          except Exception as e:
-              print("❌ Ошибка подключения к API:", e)
-              sys.exit(1)
-
-          # Проверяем чат
-          try:
-              with urllib.request.urlopen(f"{BASE}/getChat?chat_id={CHAT_ID}") as resp:
-                  chat = json.loads(resp.read().decode())
-                  if chat.get("ok"):
-                      print("✅ Чат:", chat["result"].get("title", "без названия"))
-                  else:
-                      print("❌ Бот не видит чат:", chat)
-                      sys.exit(1)
-          except Exception as e:
-              print("❌ Ошибка доступа к чату:", e)
-              sys.exit(1)
-
-          # Полный текст поста
-          text = """🚀 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>МУЛЬТИ-КОМПАНИЯ ПОЛНОГО ЦИКЛА</b></a> — <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ВИТРИНА КЕЙСОВ 2026</b></a>
-          <a href="https://t.me/Keis_Marketing_bot?start=pin">100+ услуг</a> · <a href="https://t.me/Keis_Marketing_bot?start=pin">только штатные специалисты</a> · <a href="https://t.me/Keis_Marketing_bot?start=pin">реальные результаты каждую неделю</a>
-
-          ━━━━━━━━━━━━━━━━━━━━
-          <blockquote><a href="https://t.me/Keis_Marketing_bot?start=pin">❌</a> <b>БОЛЬ РЫНКА 2026</b>
-          <i><a href="https://t.me/Keis_Marketing_bot?start=pin">Сотни исполнителей</a>, <a href="https://t.me/Keis_Marketing_bot?start=pin">хаос цен</a>, <a href="https://t.me/Keis_Marketing_bot?start=pin">риск слить бюджет без результата</a></i></blockquote>
-
-          💡 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>Как мы решаем?</b></a>
-          🔸 <a href="https://t.me/Keis_Marketing_bot?start=pin">Вместо 5 000₽ пустых обещаний</a> → <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>гарантированный KPI</b></a>
-          🔸 <a href="https://t.me/Keis_Marketing_bot?start=pin">Вместо 30 000₽ кота в мешке</a> → <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>прозрачная отчётность</b></a>
-
-          ✅ <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>НАШ ПОДХОД:</b></a> <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>минимум цены</b></a> × <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>максимум качества</b></a> = <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ваша прибыль</b></a>
-
-          ━━━━━━━━━━━━━━━━━━━━
-          🧩 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ЭКСПЕРТИЗА ПОД КЛЮЧ (кликай):</b></a>
-          <a href="https://t.me/Keis_Marketing_bot?start=pin">SEO</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">соцсети</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">маркетплейсы</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">реклама</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">сайты</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">CRM</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">боты</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">Mini App</a> (<tg-spoiler><a href="https://t.me/Keis_Marketing_bot?start=pin">TG/VK</a></tg-spoiler>) <a href="https://t.me/Keis_Marketing_bot?start=pin">ИИ</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">аналитика</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">креатив</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">рассылки</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">накрутка</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">аккаунты</a>.
-
-          <tg-spoiler><i><a href="https://t.me/Keis_Marketing_bot?start=pin">🔐 Кликни на любой эмодзи, слово или спойлер — откроется витрина кейсов с расчётом стоимости.</a></i></tg-spoiler>
-
-          💎 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>Хотите увидеть живые кейсы и точный расчёт?</b></a>
-          <a href="https://t.me/Keis_Marketing_bot?start=pin">👉 ЖМИ НА ЛЮБУЮ ССЫЛКУ, ЭМОДЗИ ИЛИ КНОПКУ НИЖЕ</a>"""
+          text = (
+              '🚀 <b>Мульти-компания полного цикла</b>\n'
+              '100+ услуг — <u>только штатные специалисты</u>\n'
+              '\n'
+              '━━━━━━━━━━━━━━━━━━━━\n'
+              '<blockquote><a href="https://t.me/Keis_Marketing_bot?start=price">❌</a> <b>Проблема 2026:</b>\n'
+              'Сотни исполнителей, хаос цен, риск потерять бюджет</blockquote>\n'
+              '\n'
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">🔸</a> <b>Вариант 1:</b> платишь 5 000₽ — теряешь 30 000₽\n'
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">🔸</a> <b>Вариант 2:</b> платишь 30 000₽ — <b>те же риски</b>\n'
+              '\n'
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">✅</a> <b>Наш подход:</b> минимум цены, максимум качества\n'
+              '\n'
+              '━━━━━━━━━━━━━━━━━━━━\n'
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">🧩</a> <b>Экспертиза:</b> SEO, соцсети, маркетплейсы, реклама, сайты, CRM, боты, Mini App (<tg-spoiler>TG/VK</tg-spoiler>), ИИ, аналитика, креатив, рассылки, накрутка, аккаунты — '
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">под ключ</a>.\n'
+              '\n'
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">💎</a> <b>Хотите расчёт под ваш проект?</b>\n'
+              '🔥 Нажмите <a href="https://t.me/Keis_Marketing_bot?start=price"><b>здесь</b></a> или кнопку ниже — бот мгновенно сравнит цены и подберёт лучшие решения. 💡'
+          )
 
           keyboard = {
               "inline_keyboard": [
-                  [{"text": "🔥 ОТКРЫТЬ ВИТРИНУ КЕЙСОВ", "url": "https://t.me/Keis_Marketing_bot?start=pin"}]
+                  [{"text": "⚡️ Рассчитать цену ✅", "url": "https://t.me/Keis_Marketing_bot?start=price"}]
               ]
           }
 
@@ -87,42 +54,36 @@ jobs:
               "reply_markup": keyboard
           }
 
-          try:
-              req = urllib.request.Request(
-                  f"{BASE}/sendMessage",
-                  data=json.dumps(payload).encode("utf-8"),
-                  headers={"Content-Type": "application/json"}
-              )
-              with urllib.request.urlopen(req) as resp:
-                  result = json.loads(resp.read().decode())
-                  if not result.get("ok"):
-                      print("❌ Ошибка при отправке:", result)
-                      sys.exit(1)
-                  message_id = result["result"]["message_id"]
-                  print("✅ Сообщение отправлено, message_id =", message_id)
-          except Exception as e:
-              print("❌ Сетевая ошибка отправки:", e)
-              sys.exit(1)
+          # Отправка
+          req = urllib.request.Request(
+              f"{BASE}/sendMessage",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"}
+          )
+          with urllib.request.urlopen(req) as resp:
+              result = json.loads(resp.read().decode())
+              if not result.get("ok"):
+                  print("Ошибка отправки:", result)
+                  sys.exit(1)
+              msg_id = result["result"]["message_id"]
+              print("✅ Пост отправлен, id:", msg_id)
 
           # Закрепление
           pin_payload = {
               "chat_id": CHAT_ID,
-              "message_id": message_id,
+              "message_id": msg_id,
               "disable_notification": False
           }
-          try:
-              req = urllib.request.Request(
-                  f"{BASE}/pinChatMessage",
-                  data=json.dumps(pin_payload).encode("utf-8"),
-                  headers={"Content-Type": "application/json"}
-              )
-              with urllib.request.urlopen(req) as resp:
-                  pin_result = json.loads(resp.read().decode())
-                  if not pin_result.get("ok"):
-                      print("❌ Ошибка закрепления:", pin_result)
-                      sys.exit(1)
-                  print("🎉 Пост закреплён!")
-          except Exception as e:
-              print("❌ Ошибка при закреплении:", e)
-              sys.exit(1)
+          req = urllib.request.Request(
+              f"{BASE}/pinChatMessage",
+              data=json.dumps(pin_payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"}
+          )
+          with urllib.request.urlopen(req) as resp:
+              pin_res = json.loads(resp.read().decode())
+              if pin_res.get("ok"):
+                  print("📌 Пост закреплён!")
+              else:
+                  print("Ошибка закрепления:", pin_res)
+                  sys.exit(1)
           PYEOF
