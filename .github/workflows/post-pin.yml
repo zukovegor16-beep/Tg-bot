@@ -1,4 +1,4 @@
-name: Анимированная витрина (обычные эмодзи)
+name: Финальная витрина (зелёная кнопка)
 
 on:
   workflow_dispatch:
@@ -20,28 +20,28 @@ jobs:
           BASE = f"https://api.telegram.org/bot{TOKEN}"
 
           text = (
-              '🚀 <b>Мульти-компания полного цикла</b>\n'
+              '<tg-emoji emoji-id="5368390346629932673">🚀</tg-emoji> <b>Мульти-компания полного цикла</b>\n'
               '100+ услуг — <u>только штатные специалисты</u>\n'
               '\n'
               '━━━━━━━━━━━━━━━━━━━━\n'
-              '<blockquote>❌ <b>Проблема 2026:</b>\n'
+              '<blockquote><tg-emoji emoji-id="5370802009827458576">❌</tg-emoji> <b>Проблема 2026:</b>\n'
               'Сотни исполнителей, хаос цен, риск потерять бюджет</blockquote>\n'
               '\n'
-              '🔸 <b>Вариант 1:</b> платишь 5 000₽ — теряешь 30 000₽\n'
-              '🔸 <b>Вариант 2:</b> платишь 30 000₽ — <b>те же риски</b>\n'
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">🔸</a> <b>Вариант 1:</b> платишь 5 000₽ — теряешь 30 000₽\n'
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">🔸</a> <b>Вариант 2:</b> платишь 30 000₽ — <b>те же риски</b>\n'
               '\n'
-              '✅ <b>Наш подход:</b> минимум цены, максимум качества\n'
+              '<tg-emoji emoji-id="5370801796219403436">✅</tg-emoji> <b>Наш подход:</b> минимум цены, максимум качества\n'
               '\n'
               '━━━━━━━━━━━━━━━━━━━━\n'
-              '🧩 <b>Экспертиза:</b> SEO, соцсети, маркетплейсы, реклама, сайты, CRM, боты, Mini App (<tg-spoiler>TG/VK</tg-spoiler>), ИИ, аналитика, креатив, рассылки, накрутка, аккаунты — '
+              '<a href="https://t.me/Keis_Marketing_bot?start=price">🧩</a> <b>Экспертиза:</b> SEO, соцсети, маркетплейсы, реклама, сайты, CRM, боты, Mini App (<tg-spoiler><a href="https://t.me/Keis_Marketing_bot?start=price">TG/VK</a></tg-spoiler>), ИИ, аналитика, креатив, рассылки, накрутка, аккаунты — '
               '<a href="https://t.me/Keis_Marketing_bot?start=price">под ключ</a>.\n'
               '\n'
-              '💎 <b>Хотите расчёт под ваш проект?</b> 👇'
+              '<tg-emoji emoji-id="5370731781878000210">💎</tg-emoji> <b>Хотите быстрый расчёт под ваш проект?</b> <tg-emoji emoji-id="5370810310421978893">👇</tg-emoji>'
           )
 
           keyboard = {
               "inline_keyboard": [
-                  [{"text": "⚡️ Рассчитать цену ✅", "url": "https://t.me/Keis_Marketing_bot?start=price"}]
+                  [{"text": "⚡️ Узнать цены 🔥", "url": "https://t.me/Keis_Marketing_bot?start=price", "style": "success"}]
               ]
           }
 
@@ -53,7 +53,6 @@ jobs:
               "reply_markup": keyboard
           }
 
-          # Отправка
           req = urllib.request.Request(
               f"{BASE}/sendMessage",
               data=json.dumps(payload).encode("utf-8"),
@@ -62,10 +61,10 @@ jobs:
           with urllib.request.urlopen(req) as resp:
               result = json.loads(resp.read().decode())
               if not result.get("ok"):
-                  print("Ошибка отправки:", result)
+                  print("Ошибка:", result)
                   sys.exit(1)
               msg_id = result["result"]["message_id"]
-              print("✅ Пост опубликован, id:", msg_id)
+              print("✅ Пост отправлен, id:", msg_id)
 
           # Закрепление
           pin_payload = {
