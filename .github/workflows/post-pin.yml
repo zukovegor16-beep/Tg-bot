@@ -1,0 +1,81 @@
+name: Опубликовать и закрепить пост-витрину
+
+on:
+  workflow_dispatch:
+
+jobs:
+  send-and-pin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Отправка сообщения с кнопкой
+        id: send
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: |
+          TEXT=$(cat <<'EOF'
+          🚀 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>МУЛЬТИ-КОМПАНИЯ ПОЛНОГО ЦИКЛА</b></a> — <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ВИТРИНА КЕЙСОВ 2026</b></a>
+          <a href="https://t.me/Keis_Marketing_bot?start=pin">100+ услуг</a> · <a href="https://t.me/Keis_Marketing_bot?start=pin">только штатные специалисты</a> · <a href="https://t.me/Keis_Marketing_bot?start=pin">реальные результаты каждую неделю</a>
+
+          ━━━━━━━━━━━━━━━━━━━━
+          <blockquote><a href="https://t.me/Keis_Marketing_bot?start=pin">❌</a> <b>БОЛЬ РЫНКА 2026</b>
+          <i><a href="https://t.me/Keis_Marketing_bot?start=pin">Сотни исполнителей</a>, <a href="https://t.me/Keis_Marketing_bot?start=pin">хаос цен</a>, <a href="https://t.me/Keis_Marketing_bot?start=pin">риск слить бюджет без результата</a></i></blockquote>
+
+          💡 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>Как мы решаем?</b></a>
+          🔸 <a href="https://t.me/Keis_Marketing_bot?start=pin">Вместо 5 000₽ пустых обещаний</a> → <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>гарантированный KPI</b></a>
+          🔸 <a href="https://t.me/Keis_Marketing_bot?start=pin">Вместо 30 000₽ кота в мешке</a> → <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>прозрачная отчётность</b></a>
+
+          ✅ <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>НАШ ПОДХОД:</b></a> <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>минимум цены</b></a> × <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>максимум качества</b></a> = <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ваша прибыль</b></a>
+
+          ━━━━━━━━━━━━━━━━━━━━
+          🧩 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ЭКСПЕРТИЗА ПОД КЛЮЧ (кликай):</b></a>
+          <a href="https://t.me/Keis_Marketing_bot?start=pin">SEO</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">соцсети</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">маркетплейсы</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">реклама</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">сайты</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">CRM</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">боты</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">Mini App</a> (<tg-spoiler><a href="https://t.me/Keis_Marketing_bot?start=pin">TG/VK</a></tg-spoiler>) <a href="https://t.me/Keis_Marketing_bot?start=pin">ИИ</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">аналитика</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">креатив</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">рассылки</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">накрутка</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">аккаунты</a>.
+
+          <tg-spoiler><i><a href="https://t.me/Keis_Marketing_bot?start=pin">🔐 Кликни на любой эмодзи, слово или спойлер — откроется витрина кейсов с расчётом стоимости.</a></i></tg-spoiler>
+
+          💎 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>Хотите увидеть живые кейсы и точный расчёт?</b></a>
+          <a href="https://t.me/Keis_Marketing_bot?start=pin">👉 ЖМИ НА ЛЮБУЮ ССЫЛКУ, ЭМОДЗИ ИЛИ КНОПКУ НИЖЕ</a>
+          EOF
+          )
+
+          KEYBOARD='{"inline_keyboard":[[{"text":"🔥 ОТКРЫТЬ ВИТРИНУ КЕЙСОВ","url":"https://t.me/Keis_Marketing_bot?start=pin"}]]}'
+
+          TEXT_ESCAPED=$(echo "$TEXT" | jq -Rs .)
+
+          RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"chat_id\": \"${CHAT_ID}\",
+              \"text\": ${TEXT_ESCAPED},
+              \"parse_mode\": \"HTML\",
+              \"disable_web_page_preview\": true,
+              \"reply_markup\": ${KEYBOARD}
+            }")
+
+          echo "Ответ отправки: $RESPONSE"
+          MESSAGE_ID=$(echo "$RESPONSE" | jq '.result.message_id')
+          echo "message_id=$MESSAGE_ID" >> $GITHUB_OUTPUT
+
+          if [ "$MESSAGE_ID" = "null" ] || [ -z "$MESSAGE_ID" ]; then
+            echo "Ошибка: не удалось получить message_id"
+            exit 1
+          fi
+
+      - name: Закрепление сообщения
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          MESSAGE_ID: ${{ steps.send.outputs.message_id }}
+        run: |
+          PIN_RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TOKEN}/pinChatMessage" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"chat_id\": \"${CHAT_ID}\",
+              \"message_id\": ${MESSAGE_ID},
+              \"disable_notification\": false
+            }")
+          echo "Ответ закрепления: $PIN_RESPONSE"
+          if [ "$(echo "$PIN_RESPONSE" | jq '.ok')" != "true" ]; then
+            echo "Ошибка закрепления: $PIN_RESPONSE"
+            exit 1
+          fi
