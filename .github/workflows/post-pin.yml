@@ -7,14 +7,20 @@ jobs:
   send-and-pin:
     runs-on: ubuntu-latest
     steps:
-      - name: Отправка сообщения с кнопкой
-        id: send
+      - name: Отправка и закрепление через Python
         env:
           TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: |
-          TEXT=$(cat <<'EOF'
-          🚀 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>МУЛЬТИ-КОМПАНИЯ ПОЛНОГО ЦИКЛА</b></a> — <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ВИТРИНА КЕЙСОВ 2026</b></a>
+          python3 << 'PYEOF'
+          import os, json, urllib.request, sys
+
+          TOKEN = os.environ["TOKEN"]
+          CHAT_ID = os.environ["CHAT_ID"]
+          BASE = f"https://api.telegram.org/bot{TOKEN}"
+
+          # Текст поста (HTML)
+          text = """🚀 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>МУЛЬТИ-КОМПАНИЯ ПОЛНОГО ЦИКЛА</b></a> — <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ВИТРИНА КЕЙСОВ 2026</b></a>
           <a href="https://t.me/Keis_Marketing_bot?start=pin">100+ услуг</a> · <a href="https://t.me/Keis_Marketing_bot?start=pin">только штатные специалисты</a> · <a href="https://t.me/Keis_Marketing_bot?start=pin">реальные результаты каждую неделю</a>
 
           ━━━━━━━━━━━━━━━━━━━━
@@ -34,48 +40,52 @@ jobs:
           <tg-spoiler><i><a href="https://t.me/Keis_Marketing_bot?start=pin">🔐 Кликни на любой эмодзи, слово или спойлер — откроется витрина кейсов с расчётом стоимости.</a></i></tg-spoiler>
 
           💎 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>Хотите увидеть живые кейсы и точный расчёт?</b></a>
-          <a href="https://t.me/Keis_Marketing_bot?start=pin">👉 ЖМИ НА ЛЮБУЮ ССЫЛКУ, ЭМОДЗИ ИЛИ КНОПКУ НИЖЕ</a>
-          EOF
+          <a href="https://t.me/Keis_Marketing_bot?start=pin">👉 ЖМИ НА ЛЮБУЮ ССЫЛКУ, ЭМОДЗИ ИЛИ КНОПКУ НИЖЕ</a>"""
+
+          # Клавиатура
+          keyboard = {
+              "inline_keyboard": [
+                  [{"text": "🔥 ОТКРЫТЬ ВИТРИНУ КЕЙСОВ", "url": "https://t.me/Keis_Marketing_bot?start=pin"}]
+              ]
+          }
+
+          payload = {
+              "chat_id": CHAT_ID,
+              "text": text,
+              "parse_mode": "HTML",
+              "disable_web_page_preview": True,
+              "reply_markup": keyboard
+          }
+
+          # Отправка сообщения
+          req = urllib.request.Request(
+              f"{BASE}/sendMessage",
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"}
           )
+          with urllib.request.urlopen(req) as resp:
+              result = json.loads(resp.read().decode())
+              if not result.get("ok"):
+                  print("Ошибка отправки:", result)
+                  sys.exit(1)
+              message_id = result["result"]["message_id"]
+              print("Отправлено, message_id =", message_id)
 
-          KEYBOARD='{"inline_keyboard":[[{"text":"🔥 ОТКРЫТЬ ВИТРИНУ КЕЙСОВ","url":"https://t.me/Keis_Marketing_bot?start=pin"}]]}'
-
-          TEXT_ESCAPED=$(echo "$TEXT" | jq -Rs .)
-
-          RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TOKEN}/sendMessage" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"chat_id\": \"${CHAT_ID}\",
-              \"text\": ${TEXT_ESCAPED},
-              \"parse_mode\": \"HTML\",
-              \"disable_web_page_preview\": true,
-              \"reply_markup\": ${KEYBOARD}
-            }")
-
-          echo "Ответ отправки: $RESPONSE"
-          MESSAGE_ID=$(echo "$RESPONSE" | jq '.result.message_id')
-          echo "message_id=$MESSAGE_ID" >> $GITHUB_OUTPUT
-
-          if [ "$MESSAGE_ID" = "null" ] || [ -z "$MESSAGE_ID" ]; then
-            echo "Ошибка: не удалось получить message_id"
-            exit 1
-          fi
-
-      - name: Закрепление сообщения
-        env:
-          TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
-          MESSAGE_ID: ${{ steps.send.outputs.message_id }}
-        run: |
-          PIN_RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TOKEN}/pinChatMessage" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"chat_id\": \"${CHAT_ID}\",
-              \"message_id\": ${MESSAGE_ID},
-              \"disable_notification\": false
-            }")
-          echo "Ответ закрепления: $PIN_RESPONSE"
-          if [ "$(echo "$PIN_RESPONSE" | jq '.ok')" != "true" ]; then
-            echo "Ошибка закрепления: $PIN_RESPONSE"
-            exit 1
-          fi
+          # Закрепление
+          pin_payload = {
+              "chat_id": CHAT_ID,
+              "message_id": message_id,
+              "disable_notification": False
+          }
+          req = urllib.request.Request(
+              f"{BASE}/pinChatMessage",
+              data=json.dumps(pin_payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"}
+          )
+          with urllib.request.urlopen(req) as resp:
+              pin_result = json.loads(resp.read().decode())
+              if not pin_result.get("ok"):
+                  print("Ошибка закрепления:", pin_result)
+                  sys.exit(1)
+              print("Пост закреплён!")
+          PYEOF
