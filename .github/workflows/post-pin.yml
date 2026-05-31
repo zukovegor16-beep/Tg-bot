@@ -1,13 +1,13 @@
-name: Опубликовать и закрепить пост-витрину
+name: Отладка и отправка поста
 
 on:
   workflow_dispatch:
 
 jobs:
-  send-and-pin:
+  debug:
     runs-on: ubuntu-latest
     steps:
-      - name: Отправка и закрепление через Python
+      - name: Проверка подключения и отправка
         env:
           TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
@@ -19,30 +19,27 @@ jobs:
           CHAT_ID = os.environ["CHAT_ID"]
           BASE = f"https://api.telegram.org/bot{TOKEN}"
 
-          # Текст поста (HTML)
-          text = """🚀 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>МУЛЬТИ-КОМПАНИЯ ПОЛНОГО ЦИКЛА</b></a> — <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ВИТРИНА КЕЙСОВ 2026</b></a>
-          <a href="https://t.me/Keis_Marketing_bot?start=pin">100+ услуг</a> · <a href="https://t.me/Keis_Marketing_bot?start=pin">только штатные специалисты</a> · <a href="https://t.me/Keis_Marketing_bot?start=pin">реальные результаты каждую неделю</a>
+          # Сначала проверяем соединение и валидность токена
+          try:
+              with urllib.request.urlopen(f"{BASE}/getMe") as resp:
+                  me = json.loads(resp.read().decode())
+                  print("✅ Бот подключён:", me)
+          except Exception as e:
+              print("❌ Ошибка подключения к Telegram API:", e)
+              sys.exit(1)
 
-          ━━━━━━━━━━━━━━━━━━━━
-          <blockquote><a href="https://t.me/Keis_Marketing_bot?start=pin">❌</a> <b>БОЛЬ РЫНКА 2026</b>
-          <i><a href="https://t.me/Keis_Marketing_bot?start=pin">Сотни исполнителей</a>, <a href="https://t.me/Keis_Marketing_bot?start=pin">хаос цен</a>, <a href="https://t.me/Keis_Marketing_bot?start=pin">риск слить бюджет без результата</a></i></blockquote>
+          # Проверяем, что бот видит чат
+          try:
+              with urllib.request.urlopen(f"{BASE}/getChat?chat_id={CHAT_ID}") as resp:
+                  chat = json.loads(resp.read().decode())
+                  print("✅ Информация о чате:", chat)
+          except Exception as e:
+              print("❌ Ошибка доступа к чату:", e)
+              print("👉 Возможно, бот не добавлен в группу или chat_id неверный.")
+              sys.exit(1)
 
-          💡 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>Как мы решаем?</b></a>
-          🔸 <a href="https://t.me/Keis_Marketing_bot?start=pin">Вместо 5 000₽ пустых обещаний</a> → <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>гарантированный KPI</b></a>
-          🔸 <a href="https://t.me/Keis_Marketing_bot?start=pin">Вместо 30 000₽ кота в мешке</a> → <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>прозрачная отчётность</b></a>
-
-          ✅ <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>НАШ ПОДХОД:</b></a> <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>минимум цены</b></a> × <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>максимум качества</b></a> = <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ваша прибыль</b></a>
-
-          ━━━━━━━━━━━━━━━━━━━━
-          🧩 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>ЭКСПЕРТИЗА ПОД КЛЮЧ (кликай):</b></a>
-          <a href="https://t.me/Keis_Marketing_bot?start=pin">SEO</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">соцсети</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">маркетплейсы</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">реклама</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">сайты</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">CRM</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">боты</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">Mini App</a> (<tg-spoiler><a href="https://t.me/Keis_Marketing_bot?start=pin">TG/VK</a></tg-spoiler>) <a href="https://t.me/Keis_Marketing_bot?start=pin">ИИ</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">аналитика</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">креатив</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">рассылки</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">накрутка</a> <a href="https://t.me/Keis_Marketing_bot?start=pin">аккаунты</a>.
-
-          <tg-spoiler><i><a href="https://t.me/Keis_Marketing_bot?start=pin">🔐 Кликни на любой эмодзи, слово или спойлер — откроется витрина кейсов с расчётом стоимости.</a></i></tg-spoiler>
-
-          💎 <a href="https://t.me/Keis_Marketing_bot?start=pin"><b>Хотите увидеть живые кейсы и точный расчёт?</b></a>
-          <a href="https://t.me/Keis_Marketing_bot?start=pin">👉 ЖМИ НА ЛЮБУЮ ССЫЛКУ, ЭМОДЗИ ИЛИ КНОПКУ НИЖЕ</a>"""
-
-          # Клавиатура
+          # Текст поста (упрощённый для отладки)
+          text = "🚀 Тестовое сообщение витрины. Если увидели — всё работает!"
           keyboard = {
               "inline_keyboard": [
                   [{"text": "🔥 ОТКРЫТЬ ВИТРИНУ КЕЙСОВ", "url": "https://t.me/Keis_Marketing_bot?start=pin"}]
@@ -57,19 +54,24 @@ jobs:
               "reply_markup": keyboard
           }
 
-          # Отправка сообщения
-          req = urllib.request.Request(
-              f"{BASE}/sendMessage",
-              data=json.dumps(payload).encode("utf-8"),
-              headers={"Content-Type": "application/json"}
-          )
-          with urllib.request.urlopen(req) as resp:
-              result = json.loads(resp.read().decode())
-              if not result.get("ok"):
-                  print("Ошибка отправки:", result)
-                  sys.exit(1)
-              message_id = result["result"]["message_id"]
-              print("Отправлено, message_id =", message_id)
+          print("Отправляем...")
+          try:
+              req = urllib.request.Request(
+                  f"{BASE}/sendMessage",
+                  data=json.dumps(payload).encode("utf-8"),
+                  headers={"Content-Type": "application/json"}
+              )
+              with urllib.request.urlopen(req) as resp:
+                  result = json.loads(resp.read().decode())
+                  print("📨 Ответ Telegram:", json.dumps(result, ensure_ascii=False, indent=2))
+                  if not result.get("ok"):
+                      print("❌ Telegram вернул ошибку.")
+                      sys.exit(1)
+                  message_id = result["result"]["message_id"]
+                  print("✅ Сообщение отправлено, message_id =", message_id)
+          except Exception as e:
+              print("❌ Ошибка при отправке:", e)
+              sys.exit(1)
 
           # Закрепление
           pin_payload = {
@@ -77,15 +79,20 @@ jobs:
               "message_id": message_id,
               "disable_notification": False
           }
-          req = urllib.request.Request(
-              f"{BASE}/pinChatMessage",
-              data=json.dumps(pin_payload).encode("utf-8"),
-              headers={"Content-Type": "application/json"}
-          )
-          with urllib.request.urlopen(req) as resp:
-              pin_result = json.loads(resp.read().decode())
-              if not pin_result.get("ok"):
-                  print("Ошибка закрепления:", pin_result)
-                  sys.exit(1)
-              print("Пост закреплён!")
+          try:
+              req = urllib.request.Request(
+                  f"{BASE}/pinChatMessage",
+                  data=json.dumps(pin_payload).encode("utf-8"),
+                  headers={"Content-Type": "application/json"}
+              )
+              with urllib.request.urlopen(req) as resp:
+                  pin_result = json.loads(resp.read().decode())
+                  print("📌 Ответ закрепления:", json.dumps(pin_result, ensure_ascii=False, indent=2))
+                  if not pin_result.get("ok"):
+                      print("❌ Не удалось закрепить.")
+                      sys.exit(1)
+                  print("🎉 Пост успешно закреплён!")
+          except Exception as e:
+              print("❌ Ошибка при закреплении:", e)
+              sys.exit(1)
           PYEOF
