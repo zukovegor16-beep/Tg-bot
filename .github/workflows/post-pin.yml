@@ -40,7 +40,7 @@ jobs:
           keyboard = {
               "inline_keyboard": [
                   [{
-                      "text": "<tg-emoji emoji-id="5456140674028019486">⚡️</tg-emoji> Рассчитать цену ✅",
+                      "text": "⚡️ Рассчитать цену ✅",
                       "url": "https://t.me/Keis_Marketing_bot?start=price",
                       "style": "success",
                       "has_shine_effect": True
