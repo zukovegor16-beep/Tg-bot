@@ -55,18 +55,27 @@ jobs:
               "reply_markup": keyboard
           }
 
+          # Отправка с расширенной обработкой ошибок
           req = urllib.request.Request(
               f"{BASE}/sendMessage",
               data=json.dumps(payload).encode("utf-8"),
               headers={"Content-Type": "application/json"}
           )
-          with urllib.request.urlopen(req) as resp:
-              result = json.loads(resp.read().decode())
-              if not result.get("ok"):
-                  print("Ошибка отправки:", result)
-                  sys.exit(1)
-              msg_id = result["result"]["message_id"]
-              print("✅ Пост отправлен, id:", msg_id)
+          try:
+              with urllib.request.urlopen(req) as resp:
+                  result = json.loads(resp.read().decode())
+          except urllib.error.HTTPError as e:
+              error_body = e.read().decode()
+              print(f"Ошибка API Telegram: {e.code} {e.reason}")
+              print("Ответ:", error_body)
+              sys.exit(1)
+
+          if not result.get("ok"):
+              print("Ошибка отправки:", result)
+              sys.exit(1)
+
+          msg_id = result["result"]["message_id"]
+          print("✅ Пост отправлен, id:", msg_id)
 
           pin_payload = {
               "chat_id": CHAT_ID,
