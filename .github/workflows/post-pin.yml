@@ -21,13 +21,15 @@ jobs:
 
           text = (
               '<tg-emoji emoji-id="5445284980978621387">🚀</tg-emoji> <b>Мульти-компания полного цикла</b>\n'
-              '100+ услуг — <u>только штатные специалисты</u>\n'
+              '100+ услуг — <u>только штатные специалисты</u><tg-emoji emoji-id="5471883477219549006">💪</tg-emoji>\n'
               '\n'
               '━━━━━━━━━━━━━━━━━━━━\n'
               '<blockquote><tg-emoji emoji-id="5465665476971471368">❌</tg-emoji> <b>Проблема 2026:</b>\n'
               'Сотни исполнителей, хаос цен, риск потерять бюджет</blockquote>\n'
               '\n'
               '<tg-emoji emoji-id="5427009714745517609">✅</tg-emoji> <b>Наш подход:</b> минимум цены, максимум качества\n'
+              '\n'
+              '<tg-emoji emoji-id="5427009714745517609">✅</tg-emoji> <b>Наша гарантия:</b> - возврат оплаты при отсутствии результата в <tg-emoji emoji-id="5370704514561093615">1️⃣</tg-emoji>первую неделю\n'
               '\n'
               '━━━━━━━━━━━━━━━━━━━━\n'
               '<tg-emoji emoji-id="5213306719215577669">🧩</tg-emoji> <b>Экспертиза:</b> SEO, соцсети, маркетплейсы, реклама, сайты, CRM, боты, Mini App (TG/VK), ИИ, аналитика, креатив, рассылки, накрутка, аккаунты — <a href="https://t.me/Keis_Marketing_bot?start=price">под ключ</a>.\n'
@@ -38,7 +40,7 @@ jobs:
           keyboard = {
               "inline_keyboard": [
                   [{
-                      "text": "⚡️ Рассчитать цену ✅",
+                      "text": "<tg-emoji emoji-id="5456140674028019486">⚡️</tg-emoji> Рассчитать цену ✅",
                       "url": "https://t.me/Keis_Marketing_bot?start=price",
                       "style": "success",
                       "has_shine_effect": True
