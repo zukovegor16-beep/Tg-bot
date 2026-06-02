@@ -42,7 +42,7 @@ jobs:
                   [{
                       "text": "⚡️ Рассчитать цену ✅",
                       "url": "https://t.me/Keis_Marketing_bot?start=price",
-                      "color": "positive",
+                      "style": "success",
                       "has_shine_effect": True
                   }]
               ]
