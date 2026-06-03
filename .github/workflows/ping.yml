@@ -1,0 +1,13 @@
+name: Keep Render Bot Alive
+
+on:
+  schedule:
+    # каждые 5 минут
+    - cron: '*/5 * * * *'
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render service
+        run: curl -Is https://botmarkethshsjsjsjsbbsbsoapagahs.onrender.com/ | head -n 1
