@@ -5,14 +5,14 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, BotCommand, BotCommandScopeDefault
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiohttp import web
 
 # ---------- НАСТРОЙКИ ----------
-BOT_TOKEN = '8835701146:AAGnGHHM7rbwjCgVucnNIk3PbUqWS9YeQEE'
-CHANNEL_ID = -1004274610789
+BOT_TOKEN = '8835701146:AAEbcx3j76Udnek14zMBwd7QFUfuveBnX4I'
+GROUP_ID = -5160270721
 
 SOCIALS = {
     'vk': {
@@ -120,8 +120,9 @@ class Form(StatesGroup):
 
 # ---------- КЛАВИАТУРЫ ----------
 def socials_keyboard():
-    buttons = [[InlineKeyboardButton(text=val['name'], callback_data=f'social_{key}')] for key, val in SOCIALS.items()]
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=val['name'], callback_data=f'social_{key}')] for key, val in SOCIALS.items()
+    ])
 
 def services_keyboard(selected, social_key):
     services = SOCIALS[social_key]['services']
@@ -148,14 +149,20 @@ async def main():
     bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher()
 
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Жми 👈 для просмотра услуг")
+    ], scope=BotCommandScopeDefault())
+
     @dp.message(Command('start'))
     async def cmd_start(message: types.Message, state: FSMContext):
         await state.clear()
-        await message.answer('👋 Давай рассчитаем цену под тебя!\n\nВыберите соцсеть или платформу:',
-                             reply_markup=socials_keyboard())
+        await message.answer(
+            '👋 Давай рассчитаем цену под тебя!\n\nВыберите соцсеть или платформу:',
+            reply_markup=socials_keyboard()
+        )
         await state.set_state(Form.social)
 
-    # Выбор соцсети
+    # --- Выбор соцсети ---
     @dp.callback_query(F.data.startswith('social_'), Form.social)
     async def process_social(callback: types.CallbackQuery, state: FSMContext):
         social_key = callback.data.split('_')[1]
@@ -166,7 +173,7 @@ async def main():
         )
         await state.set_state(Form.services)
 
-    # Переключение услуг
+    # --- Переключение услуг ---
     @dp.callback_query(F.data.startswith('toggle_'), Form.services)
     async def toggle_service(callback: types.CallbackQuery, state: FSMContext):
         service_name = callback.data.replace('toggle_', '')
@@ -180,7 +187,7 @@ async def main():
         social_key = data['social']
         await callback.message.edit_reply_markup(reply_markup=services_keyboard(selected, social_key))
 
-    # Завершение выбора услуг
+    # --- Завершение выбора услуг ---
     @dp.callback_query(F.data == 'services_done', Form.services)
     async def services_done(callback: types.CallbackQuery, state: FSMContext):
         data = await state.get_data()
@@ -188,40 +195,41 @@ async def main():
         if not selected:
             await callback.answer('Выберите хотя бы одну услугу!', show_alert=True)
             return
-        await process_next_service(callback.message, state)
+        await callback.message.edit_text('Вы выбрали услуги. Сейчас зададим уточняющие вопросы.')
+        await process_next_service(callback.message.chat.id, bot, state)
 
-    async def process_next_service(message: types.Message, state: FSMContext):
+    async def process_next_service(chat_id: int, bot: Bot, state: FSMContext):
         data = await state.get_data()
         services = data['selected_services']
         index = data.get('service_index', 0)
         if index >= len(services):
-            await message.answer('Выберите подходящий бюджет:', reply_markup=budget_keyboard())
+            await bot.send_message(chat_id, 'Выберите подходящий бюджет:', reply_markup=budget_keyboard())
             await state.set_state(Form.budget)
             return
         service = services[index]
         await state.update_data(current_service=service)
         if service in SOCIALS[data['social']]['quantitative']:
-            await message.answer(f'Уточните: <b>{service}</b>\nВведите ссылку (или описание):')
+            await bot.send_message(chat_id, f'Уточните: <b>{service}</b>\nВведите ссылку (или описание):')
             await state.set_state(Form.await_link)
         else:
-            await message.answer(f'Опишите подробнее: <b>{service}</b>')
+            await bot.send_message(chat_id, f'Опишите подробнее: <b>{service}</b>')
             await state.set_state(Form.await_description)
 
-    # Сбор ссылки
+    # --- Сбор ссылки ---
     @dp.message(Form.await_link)
     async def process_link(message: types.Message, state: FSMContext):
         await state.update_data(temp_link=message.text.strip())
         await message.answer('Выберите тип:', reply_markup=boost_types_keyboard())
         await state.set_state(Form.await_type)
 
-    # Выбор типа накрутки
+    # --- Выбор типа ---
     @dp.callback_query(F.data.startswith('boost_'), Form.await_type)
     async def process_type(callback: types.CallbackQuery, state: FSMContext):
         await state.update_data(temp_type=callback.data.replace('boost_', ''))
         await callback.message.edit_text('Введите количество:')
         await state.set_state(Form.await_quantity)
 
-    # Количество
+    # --- Количество ---
     @dp.message(Form.await_quantity)
     async def process_quantity(message: types.Message, state: FSMContext):
         try:
@@ -238,32 +246,49 @@ async def main():
             'quantity': qty
         })
         await state.update_data(details=details, service_index=data['service_index'] + 1)
-        await process_next_service(message, state)
+        await process_next_service(message.chat.id, bot, state)
 
-    # Сбор описания
+    # --- Описание ---
     @dp.message(Form.await_description)
     async def process_description(message: types.Message, state: FSMContext):
         data = await state.get_data()
         details = data.get('details', {})
         details[data['current_service']] = message.text.strip()
         await state.update_data(details=details, service_index=data['service_index'] + 1)
-        await process_next_service(message, state)
+        await process_next_service(message.chat.id, bot, state)
 
-    # Бюджет
+    # --- Бюджет ---
     @dp.callback_query(F.data.startswith('budget_'), Form.budget)
     async def process_budget(callback: types.CallbackQuery, state: FSMContext):
         await state.update_data(budget=callback.data.replace('budget_', ''))
         await callback.message.edit_text('Введите вашу сферу деятельности (например, "мебель"):')
         await state.set_state(Form.business)
 
-    # Финальная сфера
+    # --- Сфера ---
     @dp.message(Form.business)
     async def process_business(message: types.Message, state: FSMContext):
         data = await state.get_data()
         text = format_order(data, message.text.strip(), message.from_user)
-        await bot.send_message(CHANNEL_ID, text)
-        await message.answer('✅ Спасибо! Ваша заявка отправлена. Мы свяжемся с вами в ближайшее время.')
+        await bot.send_message(GROUP_ID, text)
+        await message.answer(
+            '<tg-emoji emoji-id="5427009714745517609">✅</tg-emoji> Спасибо! Ваша заявка отправлена.\n'
+            'Мы уже составляем предложение <tg-emoji emoji-id="5431449001532594346">⚡️</tg-emoji>\n'
+            'Хотите рассчитать ещё? Нажмите кнопку ниже.',
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="🔄 Новый расчёт", callback_data="restart")]
+            ])
+        )
         await state.clear()
+
+    # Обработчик кнопки "Новый расчёт"
+    @dp.callback_query(F.data == "restart")
+    async def restart(callback: types.CallbackQuery, state: FSMContext):
+        await state.clear()
+        await callback.message.edit_text(
+            '👋 Давай рассчитаем цену под тебя!\n\nВыберите соцсеть или платформу:',
+            reply_markup=socials_keyboard()
+        )
+        await state.set_state(Form.social)
 
     def format_order(data: dict, business: str, user: types.User) -> str:
         social = SOCIALS[data['social']]['name']
@@ -283,19 +308,26 @@ async def main():
         text += f'Бюджет: {budget}\nСфера: {business}\n'
         return text
 
-    # Веб-сервер для Render
+    # --- Веб-сервер (стабилизирован) ---
     app = web.Application()
     async def health(request):
         return web.Response(text="OK")
     app.router.add_get('/', health)
+    app.router.add_get('/ping', health)
+
     runner = web.AppRunner(app)
     await runner.setup()
     port = int(os.environ.get("PORT", 8080))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
 
-    # Запуск polling
-    await dp.start_polling(bot)
+    # Автоматический перезапуск polling при обрыве
+    while True:
+        try:
+            await dp.start_polling(bot)
+        except Exception as e:
+            logging.error(f"Polling error: {e}")
+            await asyncio.sleep(5)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
