@@ -1,97 +1,67 @@
-name: Premium витрина (кастомные эмодзи)
+import os, json, urllib.request, sys
 
-on:
-  workflow_dispatch:
+TOKEN = os.environ["RAW_TOKEN"].strip()
+CHAT_ID = os.environ["RAW_CHAT_ID"].strip()
+BASE = f"https://api.telegram.org/bot{TOKEN}"
 
-jobs:
-  send-and-pin:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Отправка и закрепление
-        env:
-          RAW_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          RAW_CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: |
-          python3 << 'PYEOF'
-          import os, json, urllib.request, sys, time
+# Текст для подписи к фото (caption)
+caption = (
+    '<tg-emoji emoji-id="5445284980978621387">🚀</tg-emoji> <b>Реклама услуг по выкупу и доставке из Китая</b>\n'
+    '━━━━━━━━━━━━━━━━━━━━\n'
+    '<blockquote><tg-emoji emoji-id="5465665476971471368">❌</tg-emoji> <b>Проблема:</b>\n'
+    'Профиль в Instagram с малым числом подписчиков. Цель – стабильно получать от 5 лидов в день при бюджете $20, но стоимость лида была высокой, а охваты не росли.</blockquote>\n'
+    '━━━━━━━━━━━━━━━━━━━━\n'
+    '<tg-emoji emoji-id="5427009714745517609">✅</tg-emoji> <b>Что сделали:</b>\n'
+    'Запустили таргетированную рекламу с детальной сегментацией аудитории, оформили креативы с реальными кейсами доставки, оптимизировали воронку.\n'
+    '━━━━━━━━━━━━━━━━━━━━\n'
+    '<tg-emoji emoji-id="5427009714745517609">✅</tg-emoji> <b>Результат за 7 дней:</b>\n'
+    '• 4 500 подписчиков\n'
+    '• 68 целевых лидов\n'
+    '• $1,65 за лид / $0,45 за переход\n'
+    '━━━━━━━━━━━━━━━━━━━━\n'
+    '<tg-emoji emoji-id="5427009714745517609">✅</tg-emoji> <b>В планах:</b>\n'
+    '10 000 подписчиков и 100 лидов/нед при $1,00 за лид\n'
+    '━━━━━━━━━━━━━━━━━━━━\n'
+    '<tg-emoji emoji-id="5235630047959727475">💎</tg-emoji> <b>Хотите так же?</b> <tg-emoji emoji-id="5470177992950946662">👇</tg-emoji>\n'
+    '#ТаргетИнст'
+)
 
-          TOKEN = os.environ["RAW_TOKEN"].strip()
-          CHAT_ID = os.environ["RAW_CHAT_ID"].strip()
-          BASE = f"https://api.telegram.org/bot{TOKEN}"
+# Кнопка "Хочу так же"
+keyboard = {
+    "inline_keyboard": [[{
+        "text": "📈 Хочу так же ✅",
+        "url": "https://t.me/Keis_Marketing_bot?start=target",
+        "style": "success",
+        "has_shine_effect": True
+    }]]
+}
 
-          text = (
-              '<tg-emoji emoji-id="5445284980978621387">🚀</tg-emoji> <b>Мульти-компания полного цикла</b>\n'
-              '100+ услуг — <u>только Штатные специалисты</u> <tg-emoji emoji-id="5471883477219549006">💪</tg-emoji>\n'
-              '\n'
-              '━━━━━━━━━━━━━━━━━━━━\n'
-              '<blockquote><tg-emoji emoji-id="5465665476971471368">❌</tg-emoji> <b>Проблема 2026:</b>\n'
-              'Сотни исполнителей, хаос цен, риск потерять бюджет</blockquote>\n'
-              '\n'
-              '<tg-emoji emoji-id="5427009714745517609">✅</tg-emoji> <b>Наш подход:</b> минимум цены, максимум качества\n'
-              '\n'
-              '<tg-emoji emoji-id="5427009714745517609">✅</tg-emoji> <b>Наша гарантия:</b> возврат оплаты при отсутствии результата в <tg-emoji emoji-id="5370704514561093615">1️⃣</tg-emoji>Первую неделю\n'
-              '\n'
-              '━━━━━━━━━━━━━━━━━━━━\n'
-              '<tg-emoji emoji-id="5213306719215577669">🧩</tg-emoji> <b>Экспертиза:</b> SEO, соцсети, маркетплейсы, реклама, сайты, CRM, боты, Mini App (TG/VK), ИИ, аналитика, креатив, рассылки, накрутка, аккаунты — <a href="https://t.me/Keis_Marketing_bot?start=price">под ключ</a>.\n'
-              '\n'
-              '<tg-emoji emoji-id="5235630047959727475">💎</tg-emoji> <b>Хотите расчёт под ваш проект?</b> <tg-emoji emoji-id="5470177992950946662">👇</tg-emoji>'
-          )
+# Параметры отправки фото
+payload = {
+    "chat_id": CHAT_ID,
+    "photo": "https://litter.catbox.moe/0xs1d5.jpeg",  # Твоя ссылка
+    "caption": caption,
+    "parse_mode": "HTML",
+    "reply_markup": keyboard
+}
 
-          keyboard = {
-              "inline_keyboard": [
-                  [{
-                      "text": "⚡️ Рассчитать цену ✅",
-                      "url": "https://t.me/Keis_Marketing_bot?start=price",
-                      "style": "success",
-                      "has_shine_effect": True
-                  }]
-              ]
-          }
+req = urllib.request.Request(
+    f"{BASE}/sendPhoto",
+    data=json.dumps(payload).encode("utf-8"),
+    headers={"Content-Type": "application/json"}
+)
 
-          payload = {
-              "chat_id": CHAT_ID,
-              "text": text,
-              "parse_mode": "HTML",
-              "disable_web_page_preview": True,
-              "reply_markup": keyboard
-          }
-
-          req = urllib.request.Request(
-              f"{BASE}/sendMessage",
-              data=json.dumps(payload).encode("utf-8"),
-              headers={"Content-Type": "application/json"}
-          )
-          try:
-              with urllib.request.urlopen(req) as resp:
-                  result = json.loads(resp.read().decode())
-          except urllib.error.HTTPError as e:
-              error_body = e.read().decode()
-              print(f"Ошибка API Telegram: {e.code} {e.reason}")
-              print("Ответ:", error_body)
-              sys.exit(1)
-
-          if not result.get("ok"):
-              print("Ошибка отправки:", result)
-              sys.exit(1)
-
-          msg_id = result["result"]["message_id"]
-          print("✅ Пост отправлен, id:", msg_id)
-
-          pin_payload = {
-              "chat_id": CHAT_ID,
-              "message_id": msg_id,
-              "disable_notification": False
-          }
-          req = urllib.request.Request(
-              f"{BASE}/pinChatMessage",
-              data=json.dumps(pin_payload).encode("utf-8"),
-              headers={"Content-Type": "application/json"}
-          )
-          with urllib.request.urlopen(req) as resp:
-              pin_res = json.loads(resp.read().decode())
-              if pin_res.get("ok"):
-                  print("📌 Пост закреплён!")
-              else:
-                  print("Ошибка закрепления:", pin_res)
-                  sys.exit(1)
-          PYEOF
+try:
+    with urllib.request.urlopen(req) as resp:
+        result = json.loads(resp.read().decode())
+    if result.get("ok"):
+        msg_id = result["result"]["message_id"]
+        print(f"✅ Пост с фото отправлен, id: {msg_id}")
+    else:
+        print("Ошибка отправки:", result)
+        sys.exit(1)
+except urllib.error.HTTPError as e:
+    error_body = e.read().decode()
+    print(f"Ошибка API: {e.code} {e.reason}")
+    print("Ответ:", error_body)
+    sys.exit(1)
